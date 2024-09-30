@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "./components/ui/card";
 import { Button } from "./components/ui/button";
 import { Input } from "./components/ui/input";
 import { Spinner } from "./components/ui/spinner";
+// import { toast } from "./components/ui/use-toast"; // Add this import
 import {
   clearChunkedStorage,
   ErrorHandler,
@@ -165,6 +166,24 @@ const App: React.FC = () => {
     WebApp.close();
   };
 
+  const copyWalletAddress = () => {
+    if (address) {
+      navigator.clipboard.writeText(address)
+        .then(() => {
+          // toast({
+          //   title: "Address Copied",
+          //   description: "Wallet address has been copied to clipboard",
+          // });
+          log("Wallet address copied to clipboard", "success");
+        })
+        .catch((error) => {
+          handleError(`Failed to copy address: ${error}`);
+        });
+    } else {
+      handleError("No wallet address available to copy");
+    }
+  };
+
   return (
     <div className="container mx-auto p-4">
       <div className="header">
@@ -202,7 +221,16 @@ const App: React.FC = () => {
             </div>
           ) : (
             <>
-              <p className="text-[12px]">{`Wallet Address: ${address}`}</p>
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-[12px] truncate mr-2">{`Wallet Address: ${address}`}</p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={copyWalletAddress}
+                  disabled={!address}>
+                  Copy
+                </Button>
+              </div>
               <Input
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
