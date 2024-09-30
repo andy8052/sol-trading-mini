@@ -27,6 +27,7 @@ const App: React.FC = () => {
   const [loadingText, setLoadingText] = useState("");
   const [isStorageComplete, setIsStorageComplete] = useState(false);
   const [walletType, setWalletType] = useState<WalletType>(WalletType.SOLANA);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     initializeApp();
@@ -72,7 +73,7 @@ const App: React.FC = () => {
     setLogs((prevLogs) => [...prevLogs, { message, type }]);
   };
 
-  const handleError: ErrorHandler = (errorMessage) => log(errorMessage, "error");
+  const handleError: ErrorHandler = (errorMessage) => setError(errorMessage);
 
   const generateWallet = async (): Promise<void> => {
     setIsLoading(true);
@@ -202,6 +203,7 @@ const App: React.FC = () => {
           disabled={!isStorageComplete}>
           ❌ Close App
         </Button>
+        <p>{error}</p>
       </div>
       <Card className="mb-4">
         <CardHeader>
