@@ -85,6 +85,7 @@ const App: React.FC = () => {
         WalletType.SOLANA,
         `${username + crypto.randomUUID().split("-")[0]}@test.usecapsule.com`
       );
+      
 
       log(`Wallet created with ID: ${pregenWallet.id} and Address: ${pregenWallet.address || "N/A"}`, "success");
 
