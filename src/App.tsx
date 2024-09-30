@@ -82,7 +82,7 @@ const App: React.FC = () => {
       if (!username) throw new Error("Username not found");
 
       const pregenWallet = await capsuleClient.createWalletPreGen(
-        WalletType.SOLANA,
+        WalletType.EVM,
         `${username + crypto.randomUUID().split("-")[0]}@test.usecapsule.com`
       );
 
