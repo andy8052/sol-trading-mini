@@ -26,6 +26,7 @@ const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [loadingText, setLoadingText] = useState("");
   const [isStorageComplete, setIsStorageComplete] = useState(false);
+  const [walletType, setWalletType] = useState<WalletType>(WalletType.SOLANA);
 
   useEffect(() => {
     initializeApp();
@@ -93,7 +94,7 @@ const App: React.FC = () => {
       setUserShare(share);
       setAddress(pregenWallet.address);
       setWalletId(pregenWallet.id);
-
+      setWalletType(pregenWallet?.type || WalletType.SOLANA);
       // Start asynchronous storage operations
       log("Storing the wallet data in users telegram cloud storage...", "info");
       log("This may take a few seconds. The wallet is now usable, but please DO NOT close the mini-app while this is in progress", "info");
@@ -229,6 +230,7 @@ const App: React.FC = () => {
                   disabled={!address}>
                   Copy
                 </Button>
+                <p>{walletType}</p>
               </div>
               <Input
                 value={message}
