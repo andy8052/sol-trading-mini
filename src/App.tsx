@@ -13,6 +13,17 @@ import {
   retrieveChunkedData,
   storeWithChunking,
 } from "./lib/cloudStorageUtil";
+import { gql, GraphQLClient } from "graphql-request";
+
+const endpoint = `https://programs.shyft.to/v0/graphql/?api_key=Y7PAezP6ijvZZd9A`;
+
+const graphQLClient = new GraphQLClient(endpoint, {
+  method: `POST`,
+  jsonSerializer: {
+    parse: JSON.parse,
+    stringify: JSON.stringify,
+  },
+});
 
 const App: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -27,10 +38,101 @@ const App: React.FC = () => {
   const [loadingText, setLoadingText] = useState("");
   const [isStorageComplete, setIsStorageComplete] = useState(false);
   const [walletType, setWalletType] = useState<WalletType>(WalletType.SOLANA);
+  const [tokenAddress, setTokenAddress] = useState<string>("");
+  const [lpPair, setLpPair] = useState<string | undefined>();
 
   useEffect(() => {
     initializeApp();
   }, []);
+
+  interface LiquidityPoolResponse {
+    Raydium_LiquidityPoolv4: Array<{ pubkey: string }>;
+  }
+
+  async function queryLpPair(tokenOne:string) {
+      const query = gql`
+          query MyQuery($where: Raydium_LiquidityPoolv4_bool_exp,
+          $order_by: [Raydium_LiquidityPoolv4_order_by!]) {
+      Raydium_LiquidityPoolv4(
+          where: $where
+          order_by: $order_by
+      ) {
+          amountWaveRatio
+          baseDecimal
+          baseLotSize
+          baseMint
+          baseNeedTakePnl
+          baseTotalPnl
+          baseVault
+          depth
+          lpMint
+          lpReserve
+          lpVault
+          marketId
+          marketProgramId
+          maxOrder
+          maxPriceMultiplier
+          minPriceMultiplier
+          minSeparateDenominator
+          minSeparateNumerator
+          minSize
+          nonce
+          openOrders
+          orderbookToInitTime
+          owner
+          pnlDenominator
+          pnlNumerator
+          poolOpenTime
+          punishCoinAmount
+          punishPcAmount
+          quoteDecimal
+          quoteLotSize
+          quoteMint
+          quoteNeedTakePnl
+          quoteTotalPnl
+          quoteVault
+          resetFlag
+          state
+          status
+          swapBase2QuoteFee
+          swapBaseInAmount
+          swapBaseOutAmount
+          swapFeeDenominator
+          swapFeeNumerator
+          swapQuote2BaseFee
+          swapQuoteInAmount
+          swapQuoteOutAmount
+          systemDecimalValue
+          targetOrders
+          tradeFeeDenominator
+          tradeFeeNumerator
+          volMaxCutRatio
+          withdrawQueue
+          pubkey
+      }
+      }`;
+
+      const variables = {
+          where: {
+          _or: [
+                {baseMint:{_eq:tokenOne}},
+                {quoteMint:{_eq:tokenOne}},  
+          ]},
+          order_by: [
+              {
+                  lpReserve: "desc"
+              }
+          ]
+      };
+
+      const data = await graphQLClient.request<LiquidityPoolResponse>(query, variables);
+      setLpPair(data.Raydium_LiquidityPoolv4[0]?.pubkey);
+  }
+
+  useEffect(() => {
+      queryLpPair(tokenAddress);
+      // getQuote();
+  }, [tokenAddress]);
 
   const initializeApp = async () => {
     setIsLoading(true);
@@ -85,7 +187,7 @@ const App: React.FC = () => {
         WalletType.SOLANA,
         `${username + crypto.randomUUID().split("-")[0]}@test.usecapsule.com`
       );
-      
+
 
       log(`Wallet created with ID: ${pregenWallet.id} and Address: ${pregenWallet.address || "N/A"}`, "success");
 
@@ -185,6 +287,10 @@ const App: React.FC = () => {
     }
   };
 
+  const handleTokenAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setTokenAddress(e.target.value);
+  };
+
   return (
     <div className="container mx-auto p-4">
       <div className="header">
@@ -247,6 +353,7 @@ const App: React.FC = () => {
                 {isLoading ? <Spinner /> : "Sign Message"}
               </Button>
               {signature && <p className="mb-2 break-all">Signature: {signature}</p>}
+              {lpPair && <p className="mb-2 break-all">LP Pair: {lpPair}</p>}
               <div>
                 <Button
                   onClick={clearStorage}
@@ -255,6 +362,12 @@ const App: React.FC = () => {
                   Clear Storage
                 </Button>
               </div>
+              <Input
+                value={tokenAddress}
+                onChange={handleTokenAddressChange}
+                placeholder="Paste Solana token address"
+                className="mb-2 bg-card"
+              />
             </>
           )}
           {loadingText && <p className="mt-2">{loadingText}</p>}
