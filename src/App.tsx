@@ -354,6 +354,8 @@ const App: React.FC = () => {
               </Button>
               {signature && <p className="mb-2 break-all">Signature: {signature}</p>}
               {lpPair && <p className="mb-2 break-all">LP Pair: {lpPair}</p>}
+              {lpPair && <div id="dexscreener-embed"><iframe src={`https://dexscreener.com/solana/${lpPair}?embed=1&theme=dark&trades=0&info=0`}></iframe></div>}
+
               <div>
                 <Button
                   onClick={clearStorage}
