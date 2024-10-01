@@ -192,7 +192,7 @@ const App: React.FC = () => {
 
       const pregenWallet = await capsuleClient.createWalletPreGen(
         WalletType.SOLANA,
-        username
+        `${username} + testingtesting123`
       );
 
 
