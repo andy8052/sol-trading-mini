@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import WebApp from "@twa-dev/sdk";
 import capsuleClient from "./lib/capsuleClient";
+// import { CapsuleSolanaWeb3Signer } from '@usecapsule/solana-web3.js-v1-integration';
 import { WalletType } from "@usecapsule/web-sdk";
 import { Card, CardContent, CardHeader, CardTitle } from "./components/ui/card";
 import { Button } from "./components/ui/button";
@@ -14,8 +15,14 @@ import {
   storeWithChunking,
 } from "./lib/cloudStorageUtil";
 import { gql, GraphQLClient } from "graphql-request";
+import * as solana from '@solana/web3.js';
+import { Connection, Keypair, PublicKey, VersionedTransaction } from '@solana/web3.js';
 
 const endpoint = `https://programs.shyft.to/v0/graphql/?api_key=Y7PAezP6ijvZZd9A`;
+
+// const connection = new solana.Connection(solana.clusterApiUrl('mainnet-beta'), 'confirmed');
+
+// const solanaSigner = new CapsuleSolanaWeb3Signer(capsuleClient as CoreCapsule, connection);
 
 const graphQLClient = new GraphQLClient(endpoint, {
   method: `POST`,
@@ -40,6 +47,7 @@ const App: React.FC = () => {
   const [walletType, setWalletType] = useState<WalletType>(WalletType.SOLANA);
   const [tokenAddress, setTokenAddress] = useState<string>("");
   const [lpPair, setLpPair] = useState<string | undefined>();
+  const [solAmount, setSolAmount] = useState<string>('');
 
   useEffect(() => {
     initializeApp();
@@ -298,6 +306,61 @@ const App: React.FC = () => {
     setTokenAddress(e.target.value);
   };
 
+  const handleSolAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSolAmount(e.target.value);
+  };
+
+  const executeSwap = async () => {
+    if (!solAmount || !tokenAddress || !walletId || !userShare) {
+      handleError("Missing required information for swap");
+      return;
+    }
+
+    setIsLoading(true);
+    setLoadingText("Executing swap...");
+
+    try {
+      // Convert SOL amount to lamports
+      const lamports = Math.floor(parseFloat(solAmount) * 1e9);
+
+      // Get quote from Jupiter
+      const quoteResponse = await fetch(`https://quote-api.jup.ag/v6/quote?inputMint=So11111111111111111111111111111111111111112&outputMint=${tokenAddress}&amount=${lamports}&slippageBps=50`).then(res => res.json());
+
+      // Get swap transaction
+      const { swapTransaction } = await fetch('https://quote-api.jup.ag/v6/swap', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          quoteResponse,
+          userPublicKey: address,
+          wrapAndUnwrapSol: true
+        })
+      }).then(res => res.json());
+
+      // Deserialize the transaction
+      // const swapTransactionBuf = Buffer.from(swapTransaction, 'base64');
+      // const transaction = VersionedTransaction.deserialize(swapTransactionBuf);
+
+      // Sign and send the transaction
+      await capsuleClient.setUserShare(userShare);
+      const signedTx = await capsuleClient.signTransaction(walletId, swapTransaction, 'mainnet-beta');
+      log(`Signed transaction: ${signedTx}`, "success");
+      // await capsuleClient.sendTransaction(walletId, swapTransaction, 'mainnet-beta');
+      // const signedTx = await capsuleClient.signTransaction(walletId, transaction);
+
+      // Send the signed transaction
+      // const connection = new Connection('https://api.mainnet-beta.solana.com');
+      // const signature = await connection.sendRawTransaction(signedTx.serialize());
+
+      log(`Swap executed successfully. Transaction signature: ${signature}`, "success");
+    } catch (error) {
+      handleError(`Error executing swap: ${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      setIsLoading(false);
+      setLoadingText("");
+    }
+  };
+
   return (
     <div className="container mx-auto p-4">
       <div className="header">
@@ -390,6 +453,22 @@ const App: React.FC = () => {
                 placeholder="Paste Solana token address"
                 className="mb-2 bg-card"
               />
+              <Input
+                value={solAmount}
+                onChange={handleSolAmountChange}
+                placeholder="Enter SOL amount to swap"
+                className="mb-2 bg-card"
+                type="number"
+                step="0.000000001"
+                min="0"
+              />
+              <Button
+                onClick={executeSwap}
+                disabled={isLoading || !solAmount || !tokenAddress}
+                className="mb-2"
+              >
+                {isLoading ? <Spinner /> : "Swap SOL for Token"}
+              </Button>
             </>
           )}
           {loadingText && <p className="mt-2">{loadingText}</p>}
