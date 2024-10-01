@@ -48,6 +48,7 @@ const App: React.FC = () => {
   const [tokenAddress, setTokenAddress] = useState<string>("");
   const [lpPair, setLpPair] = useState<string | undefined>();
   const [solAmount, setSolAmount] = useState<string>('');
+  const [activeTab, setActiveTab] = useState<'app' | 'chart'>('app');
 
   useEffect(() => {
     initializeApp();
@@ -362,156 +363,175 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto p-4">
-      <div className="header">
-        <Button variant={"link"}>
-          <a href="https://usecapsule.com" target="_blank">Capsule</a>
-        </Button>
-        <Button variant={"link"}>
-          <a href="https://docs.usecapsule.com" target="_blank">Docs</a>
-        </Button>
-        <Button variant={"link"}>
-          <a href="https://developer.usecapsule.com" target="_blank">Get Access</a>
+    <div className="container mx-auto p-4 flex flex-col h-screen">
+      <div className="flex-grow overflow-auto">
+        {activeTab === 'app' ? (
+          // Main app content
+          <>
+            <div className="header">
+              <Button variant={"link"}>
+                <a href="https://usecapsule.com" target="_blank">Capsule</a>
+              </Button>
+              <Button variant={"link"}>
+                <a href="https://docs.usecapsule.com" target="_blank">Docs</a>
+              </Button>
+              <Button variant={"link"}>
+                <a href="https://developer.usecapsule.com" target="_blank">Get Access</a>
+              </Button>
+              <Button
+                variant={"link"}
+                onClick={logout}
+                disabled={!isStorageComplete}>
+                ❌ Close App
+              </Button>
+            </div>
+            <Card className="mb-4">
+              <CardHeader>
+                <CardTitle>{isAuthenticated ? "Wallet Manager" : "Capsule TG App Example"}</CardTitle>
+              </CardHeader>
+              <CardContent className="overflow-hidden">
+                {!isAuthenticated ? (
+                  <p>Authenticating...</p>
+                ) : !walletId ? (
+                  <div className="flex justify-between">
+                    <Button
+                      onClick={generateWallet}
+                      disabled={isLoading}>
+                      {isLoading ? <Spinner /> : "Create New Wallet"}
+                    </Button>
+                    <p></p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-[12px] truncate mr-2">{`Wallet Address: ${address}`}</p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={copyWalletAddress}
+                        disabled={!address}>
+                        Copy
+                      </Button>
+                      <p>{walletType}</p>
+                    </div>
+                    <Input
+                      value={message}
+                      onChange={(e) => setMessage(e.target.value)}
+                      placeholder="Message to sign"
+                      className="mb-2 bg-card"
+                    />
+                    <Button
+                      variant={"outline"}
+                      onClick={signMessage}
+                      className="mb-2"
+                      disabled={isLoading || !message}>
+                      {isLoading ? <Spinner /> : "Sign Message"}
+                    </Button>
+                    {signature && <p className="mb-2 break-all">Signature: {signature}</p>}
+                    {lpPair && <p className="mb-2 break-all">LP Pair: {lpPair}</p>}
+                    <div>
+                      <Button
+                        onClick={clearStorage}
+                        className="ml-2"
+                        disabled={isLoading}>
+                        Clear Storage
+                      </Button>
+                    </div>
+                    <Input
+                      value={tokenAddress}
+                      onChange={handleTokenAddressChange}
+                      placeholder="Paste Solana token address"
+                      className="mb-2 bg-card"
+                    />
+                    <Input
+                      value={solAmount}
+                      onChange={handleSolAmountChange}
+                      placeholder="Enter SOL amount to swap"
+                      className="mb-2 bg-card"
+                      type="number"
+                      step="0.000000001"
+                      min="0"
+                    />
+                    <Button
+                      onClick={executeSwap}
+                      disabled={isLoading || !solAmount || !tokenAddress}
+                      className="mb-2"
+                    >
+                      {isLoading ? <Spinner /> : "Swap SOL for Token"}
+                    </Button>
+                  </>
+                )}
+                {loadingText && <p className="mt-2">{loadingText}</p>}
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex justify-between flex-row">
+                <CardTitle>App Logs</CardTitle>
+                <Button
+                  size={"sm"}
+                  variant={"outline"}
+                  onClick={() => setShowLogs(!showLogs)}>
+                  {showLogs ? 'Hide' : 'Show'}
+                </Button>
+                <Button
+                  size={"sm"}
+                  disabled={logs.length === 0}
+                  variant={"outline"}
+                  onClick={() => setLogs([])}>
+                  Clear
+                </Button>
+              </CardHeader>
+              <CardContent className="overflow-auto max-h-60">
+                <p>{userShare ? (isStorageComplete ? `Wallet Stored: ✅` : `Wallet Stored: In Progress`) : ``}</p>
+                <p>{userShare ? (isLoading ? `Wallet Fetched: In Progress` : `Wallet Fetched: ✅`) : ``}</p>
+                <div className="font-mono text-[12px]">
+                  {!!showLogs && (
+                    logs.length === 0 ? (
+                      <p>No logs yet.</p>
+                    ) : (
+                      logs.map((log, index) => (
+                        <p
+                          key={index}
+                          className={`${log.type === "error" ? "text-red-500" : log.type === "success" ? "text-green-500" : ""}`}>
+                          {log.message}
+                        </p>
+                      ))
+                    ))
+                  }
+                </div>
+                </CardContent>
+            </Card>
+          </>
+        ) : (
+          // Chart iframe
+          <div className="h-full w-full">
+            {lpPair && (
+              <iframe
+                src={`https://www.geckoterminal.com/solana/pools/${lpPair}?embed=1&info=0&swaps=0`}
+                className="w-full h-full border-0"
+                title="GeckoTerminal Embed"
+              />
+            )}
+          </div>
+        )}
+      </div>
+      
+      {/* Bottom Navigation */}
+      <div className="flex justify-around items-center h-16 bg-gray-100 mt-4">
+        <Button
+          onClick={() => setActiveTab('app')}
+          variant={activeTab === 'app' ? "default" : "outline"}
+        >
+          App
         </Button>
         <Button
-          variant={"link"}
-          onClick={logout}
-          disabled={!isStorageComplete}>
-          ❌ Close App
+          onClick={() => setActiveTab('chart')}
+          variant={activeTab === 'chart' ? "default" : "outline"}
+          disabled={!lpPair}
+        >
+          Chart
         </Button>
       </div>
-      <Card className="mb-4">
-        <CardHeader>
-          <CardTitle>{isAuthenticated ? "Wallet Manager" : "Capsule TG App Example"}</CardTitle>
-        </CardHeader>
-        <CardContent className="overflow-hidden">
-          {!isAuthenticated ? (
-            <p>Authenticating...</p>
-          ) : !walletId ? (
-            <div className="flex justify-between">
-              <Button
-                onClick={generateWallet}
-                disabled={isLoading}>
-                {isLoading ? <Spinner /> : "Create New Wallet"}
-              </Button>
-              <p></p>
-            </div>
-          ) : (
-            <>
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-[12px] truncate mr-2">{`Wallet Address: ${address}`}</p>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={copyWalletAddress}
-                  disabled={!address}>
-                  Copy
-                </Button>
-                <p>{walletType}</p>
-              </div>
-              <Input
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                placeholder="Message to sign"
-                className="mb-2 bg-card"
-              />
-              <Button
-                variant={"outline"}
-                onClick={signMessage}
-                className="mb-2"
-                disabled={isLoading || !message}>
-                {isLoading ? <Spinner /> : "Sign Message"}
-              </Button>
-              {signature && <p className="mb-2 break-all">Signature: {signature}</p>}
-              {lpPair && <p className="mb-2 break-all">LP Pair: {lpPair}</p>}
-              {lpPair && <div id="dexscreener-embed">
-                {/* <iframe height="100%" width="100%" id="geckoterminal-embed" title="GeckoTerminal Embed" src="https://www.geckoterminal.com/solana/pools/6pCJNDxqQ4YiKWGvd12BsPtgMiJhE5qzE7UmuaNS73Er?embed=1&info=0&swaps=0" frameborder="0" allow="clipboard-write" allowfullscreen></iframe> */}
-                <iframe src={`https://www.geckoterminal.com/solana/pools/${lpPair}?embed=1&info=0&swaps=0`}
-                  style={{
-                    position: 'absolute',
-                    width: '100%',
-                    height: '100%',
-                    top: 0,
-                    left: 0,
-                    border: 0,
-                  }}>
-
-                  </iframe>
-              </div>}
-
-              <div>
-                <Button
-                  onClick={clearStorage}
-                  className="ml-2"
-                  disabled={isLoading}>
-                  Clear Storage
-                </Button>
-              </div>
-              <Input
-                value={tokenAddress}
-                onChange={handleTokenAddressChange}
-                placeholder="Paste Solana token address"
-                className="mb-2 bg-card"
-              />
-              <Input
-                value={solAmount}
-                onChange={handleSolAmountChange}
-                placeholder="Enter SOL amount to swap"
-                className="mb-2 bg-card"
-                type="number"
-                step="0.000000001"
-                min="0"
-              />
-              <Button
-                onClick={executeSwap}
-                disabled={isLoading || !solAmount || !tokenAddress}
-                className="mb-2"
-              >
-                {isLoading ? <Spinner /> : "Swap SOL for Token"}
-              </Button>
-            </>
-          )}
-          {loadingText && <p className="mt-2">{loadingText}</p>}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader className="flex justify-between flex-row">
-          <CardTitle>App Logs</CardTitle>
-          <Button
-            size={"sm"}
-            variant={"outline"}
-            onClick={() => setShowLogs(!showLogs)}>
-            {showLogs ? 'Hide' : 'Show'}
-          </Button>
-          <Button
-            size={"sm"}
-            disabled={logs.length === 0}
-            variant={"outline"}
-            onClick={() => setLogs([])}>
-            Clear
-          </Button>
-        </CardHeader>
-        <CardContent className="overflow-auto max-h-60">
-          <p>{userShare ? (isStorageComplete ? `Wallet Stored: ✅` : `Wallet Stored: In Progress`) : ``}</p>
-          <p>{userShare ? (isLoading ? `Wallet Fetched: In Progress` : `Wallet Fetched: ✅`) : ``}</p>
-          <div className="font-mono text-[12px]">
-            {!!showLogs && (
-              logs.length === 0 ? (
-                <p>No logs yet.</p>
-              ) : (
-                logs.map((log, index) => (
-                  <p
-                    key={index}
-                    className={`${log.type === "error" ? "text-red-500" : log.type === "success" ? "text-green-500" : ""}`}>
-                    {log.message}
-                  </p>
-                ))
-              ))
-            }
-          </div>
-          </CardContent>
-      </Card>
     </div>
   );
 };
