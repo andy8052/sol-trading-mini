@@ -141,14 +141,17 @@ const App: React.FC = () => {
     try {
       WebApp.ready();
 
+      const username = WebApp.initDataUnsafe.user?.username;
+      if (!username) throw new Error("Username not found");
+
       if (!WebApp.initDataUnsafe.user) {
         throw new Error("No User found. Please open App from Telegram");
       }
 
-      log(`User authenticated: ${WebApp.initDataUnsafe.user.username}`, "success");
+      log(`User authenticated: ${username}`, "success");
       setIsAuthenticated(true);
       setLoadingText(
-        `Checking ${WebApp.initDataUnsafe.user.username}'s telegram cloud storage for existing wallet data...`
+        `Checking ${username}'s telegram cloud storage for existing wallet data...`
       );
       const userShare = await retrieveChunkedData("userShare", log, handleError);
       const walletId = await retrieveChunkedData("walletId", log, handleError);
@@ -159,6 +162,10 @@ const App: React.FC = () => {
         setIsStorageComplete(true);
         log(`Wallet data found: ${walletId}`, "success");
         await capsuleClient.setUserShare(userShare);
+
+        const pregenWallets = await capsuleClient.getPregenWallets(username);
+        const pregenWallet = pregenWallets[0].address || "";
+        setAddress(pregenWallet);
       } else {
         log(`No existing wallet data found for user ${WebApp.initDataUnsafe.user.username}`, "info");
       }
@@ -185,7 +192,7 @@ const App: React.FC = () => {
 
       const pregenWallet = await capsuleClient.createWalletPreGen(
         WalletType.SOLANA,
-        `${username + crypto.randomUUID().split("-")[0]}@test.usecapsule.com`
+        username
       );
 
 
