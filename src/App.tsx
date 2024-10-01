@@ -15,7 +15,7 @@ import {
   storeWithChunking,
 } from "./lib/cloudStorageUtil";
 import { gql, GraphQLClient } from "graphql-request";
-import { QuoteGetRequest, QuoteResponse, SwapResponse, createJupiterApiClient } from '@jup-ag/api';
+import { QuoteGetRequest, createJupiterApiClient } from '@jup-ag/api';
 // import * as solana from '@solana/web3.js';
 // import { Connection, Keypair, PublicKey, VersionedTransaction } from '@solana/web3.js';
 
