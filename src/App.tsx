@@ -15,6 +15,7 @@ import {
   storeWithChunking,
 } from "./lib/cloudStorageUtil";
 import { gql, GraphQLClient } from "graphql-request";
+import { QuoteGetRequest, QuoteResponse, SwapResponse, createJupiterApiClient } from '@jup-ag/api';
 // import * as solana from '@solana/web3.js';
 // import { Connection, Keypair, PublicKey, VersionedTransaction } from '@solana/web3.js';
 
@@ -31,6 +32,8 @@ const graphQLClient = new GraphQLClient(endpoint, {
     stringify: JSON.stringify,
   },
 });
+
+const jupiterQuoteApi = createJupiterApiClient();
 
 const App: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -138,6 +141,40 @@ const App: React.FC = () => {
       setLpPair(data.Raydium_LiquidityPoolv4[0]?.pubkey);
   }
 
+  async function getQuote() {
+    // basic params
+    // const params: QuoteGetRequest = {
+    //   inputMint: "J1toso1uCk3RLmjorhTtrVwY9HJ7X8V9yYac6Y7kGCPn",
+    //   outputMint: "mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So",
+    //   amount: 35281,
+    //   slippageBps: 50,
+    //   onlyDirectRoutes: false,
+    //   asLegacyTransaction: false,
+    // }
+
+    // auto slippage w/ minimizeSlippage params
+    const params: QuoteGetRequest = {
+        inputMint: "So11111111111111111111111111111111111111112",
+        outputMint: "EKpQGSJtjMFqKZ9KQanSqYXRcF8fBopzLHYxdM65zcjm", // $WIF
+        amount: 100000000, // 0.1 SOL
+        autoSlippage: true,
+        autoSlippageCollisionUsdValue: 1_000,
+        maxAutoSlippageBps: 1000, // 10%
+        minimizeSlippage: true,
+        onlyDirectRoutes: false,
+        asLegacyTransaction: false,
+    };
+
+    // get quote
+    const quote = await jupiterQuoteApi.quoteGet(params);
+    log(JSON.stringify(quote), "info");
+
+    if (!quote) {
+        throw new Error("unable to quote");
+    }
+    return quote;
+}
+
   useEffect(() => {
       queryLpPair(tokenAddress);
       // getQuote();
@@ -164,6 +201,8 @@ const App: React.FC = () => {
       );
       const userShare = await retrieveChunkedData("userShare", log, handleError);
       const walletId = await retrieveChunkedData("walletId", log, handleError);
+
+      await getQuote();
 
       if (userShare && walletId) {
         setUserShare(userShare);
