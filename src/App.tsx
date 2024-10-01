@@ -354,7 +354,19 @@ const App: React.FC = () => {
               </Button>
               {signature && <p className="mb-2 break-all">Signature: {signature}</p>}
               {lpPair && <p className="mb-2 break-all">LP Pair: {lpPair}</p>}
-              {lpPair && <div id="dexscreener-embed"><iframe src={`https://dexscreener.com/solana/${lpPair}?embed=1&theme=dark&trades=0&info=0`}></iframe></div>}
+              {lpPair && <div id="dexscreener-embed">
+                <iframe src={`https://dexscreener.com/solana/${lpPair}?embed=1&theme=dark&trades=0&info=0`}
+                  style={{
+                    position: 'absolute',
+                    width: '100%',
+                    height: '50%',
+                    top: 0,
+                    left: 0,
+                    border: 0,
+                  }}>
+                    
+                  </iframe>
+              </div>}
 
               <div>
                 <Button
