@@ -355,16 +355,17 @@ const App: React.FC = () => {
               {signature && <p className="mb-2 break-all">Signature: {signature}</p>}
               {lpPair && <p className="mb-2 break-all">LP Pair: {lpPair}</p>}
               {lpPair && <div id="dexscreener-embed">
-                <iframe src={`https://dexscreener.com/solana/${lpPair}?embed=1&theme=dark&trades=0&info=0`}
+                {/* <iframe height="100%" width="100%" id="geckoterminal-embed" title="GeckoTerminal Embed" src="https://www.geckoterminal.com/solana/pools/6pCJNDxqQ4YiKWGvd12BsPtgMiJhE5qzE7UmuaNS73Er?embed=1&info=0&swaps=0" frameborder="0" allow="clipboard-write" allowfullscreen></iframe> */}
+                <iframe src={`https://www.geckoterminal.com/solana/pools/${lpPair}?embed=1&info=0&swaps=0`}
                   style={{
                     position: 'absolute',
                     width: '100%',
-                    height: '50%',
+                    height: '100%',
                     top: 0,
                     left: 0,
                     border: 0,
                   }}>
-                    
+
                   </iframe>
               </div>}
 
