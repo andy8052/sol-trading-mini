@@ -163,8 +163,8 @@ const App: React.FC = () => {
         log(`Wallet data found: ${walletId}`, "success");
         await capsuleClient.setUserShare(userShare);
 
-        const pregenWallets = await capsuleClient.getPregenWallets(username);
-        const pregenWallet = pregenWallets[0].address || "";
+        const pregenWallet = await capsuleClient.getAddress(walletId);
+        // const pregenWallet = pregenWallets[0].address || "";
         setAddress(pregenWallet);
       } else {
         log(`No existing wallet data found for user ${WebApp.initDataUnsafe.user.username}`, "info");
@@ -192,7 +192,7 @@ const App: React.FC = () => {
 
       const pregenWallet = await capsuleClient.createWalletPreGen(
         WalletType.SOLANA,
-        `${username} + testingtesting123`
+        `${username + crypto.randomUUID().split("-")[0]}@test.usecapsule.com`
       );
 
 
