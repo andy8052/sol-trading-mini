@@ -15,8 +15,8 @@ import {
   storeWithChunking,
 } from "./lib/cloudStorageUtil";
 import { gql, GraphQLClient } from "graphql-request";
-import * as solana from '@solana/web3.js';
-import { Connection, Keypair, PublicKey, VersionedTransaction } from '@solana/web3.js';
+// import * as solana from '@solana/web3.js';
+// import { Connection, Keypair, PublicKey, VersionedTransaction } from '@solana/web3.js';
 
 const endpoint = `https://programs.shyft.to/v0/graphql/?api_key=Y7PAezP6ijvZZd9A`;
 
