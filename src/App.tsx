@@ -392,8 +392,8 @@ const App: React.FC = () => {
 
       // Sign and send the transaction
       await capsuleClient.setUserShare(userShare);
-      const signedTx = await capsuleClient.signTransaction(walletId, swapResponse.swapTransaction, 'mainnet-beta');
-      log(`Signed transaction: ${signedTx}`, "success");
+      // const signedTx = await capsuleClient.signTransaction(walletId, swapResponse.swapTransaction, 'mainnet-beta');
+      // log(`Signed transaction: ${signedTx}`, "success");
       // await capsuleClient.sendTransaction(walletId, swapTransaction, 'mainnet-beta');
       // const signedTx = await capsuleClient.signTransaction(walletId, transaction);
 
