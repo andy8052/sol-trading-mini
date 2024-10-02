@@ -361,21 +361,30 @@ const App: React.FC = () => {
 
     try {
       // Convert SOL amount to lamports
-      const lamports = Math.floor(parseFloat(solAmount) * 1e9);
+      // const lamports = Math.floor(parseFloat(solAmount) * 1e9);
 
       // Get quote from Jupiter
-      const quoteResponse = await fetch(`https://quote-api.jup.ag/v6/quote?inputMint=So11111111111111111111111111111111111111112&outputMint=${tokenAddress}&amount=${lamports}&slippageBps=50`).then(res => res.json());
+      const quoteResponse = await getQuote();
+
+      const swapResponse = await jupiterQuoteApi.swapPost({
+          swapRequest: {
+              quoteResponse,
+              userPublicKey: address || "",
+              wrapAndUnwrapSol: true,
+          },
+      });
+      log(JSON.stringify(swapResponse), "info");
 
       // Get swap transaction
-      const { swapTransaction } = await fetch('https://quote-api.jup.ag/v6/swap', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          quoteResponse,
-          userPublicKey: address,
-          wrapAndUnwrapSol: true
-        })
-      }).then(res => res.json());
+      // const { swapTransaction } = await fetch('https://quote-api.jup.ag/v6/swap', {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify({
+      //     quoteResponse,
+      //     userPublicKey: address,
+      //     wrapAndUnwrapSol: true
+      //   })
+      // }).then(res => res.json());
 
       // Deserialize the transaction
       // const swapTransactionBuf = Buffer.from(swapTransaction, 'base64');
@@ -383,7 +392,7 @@ const App: React.FC = () => {
 
       // Sign and send the transaction
       await capsuleClient.setUserShare(userShare);
-      const signedTx = await capsuleClient.signTransaction(walletId, swapTransaction, 'mainnet-beta');
+      const signedTx = await capsuleClient.signTransaction(walletId, swapResponse.swapTransaction, 'mainnet-beta');
       log(`Signed transaction: ${signedTx}`, "success");
       // await capsuleClient.sendTransaction(walletId, swapTransaction, 'mainnet-beta');
       // const signedTx = await capsuleClient.signTransaction(walletId, transaction);
